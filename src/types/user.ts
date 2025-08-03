@@ -4,6 +4,7 @@ export interface UserProfile {
   uid: string
   email: string | null
   displayName: string | null
+  username: string // Unique username for the platform
   photoURL: string | null
   isGuest: boolean
   

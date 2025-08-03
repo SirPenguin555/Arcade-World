@@ -20,8 +20,10 @@ export const auth = getAuth(app)
 export const db = getFirestore(app)
 export const storage = getStorage(app)
 
-// Connect to emulators in development
-if (process.env.NODE_ENV === 'development') {
+// Connect to emulators in development (disabled by default - uncomment to use emulators)
+// Note: For production Firebase, keep this section commented out
+/*
+if (process.env.NODE_ENV === 'development' && process.env.USE_FIREBASE_EMULATORS === 'true') {
   try {
     // Only connect if not already connected
     if (!auth.emulatorConfig) {
@@ -43,6 +45,7 @@ if (process.env.NODE_ENV === 'development') {
     console.log('Firebase emulators connection info:', error)
   }
 }
+*/
 
 export { app }
 export default app

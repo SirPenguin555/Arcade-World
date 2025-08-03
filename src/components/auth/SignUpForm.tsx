@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -10,10 +10,16 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { useAuthStore } from '@/stores/auth'
-import { GoogleLogo, Eye, EyeSlash } from '@phosphor-icons/react'
+import { UsernameService } from '@/lib/firebase/usernames'
+import { GoogleLogo, Eye, EyeSlash, CheckCircle, XCircle } from '@phosphor-icons/react'
 
 const signUpSchema = z.object({
   displayName: z.string().min(2, 'Display name must be at least 2 characters'),
+  username: z.string()
+    .min(3, 'Username must be at least 3 characters')
+    .max(20, 'Username must be no more than 20 characters')
+    .regex(/^[a-zA-Z0-9][a-zA-Z0-9_-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]$/, 
+      'Username can only contain letters, numbers, underscores, and hyphens'),
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string(),
@@ -28,6 +34,8 @@ export function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
+  const [usernameError, setUsernameError] = useState<string | null>(null)
   const router = useRouter()
   const { signUp, signInWithGoogle, signInAnonymously, error, clearError } = useAuthStore()
 
@@ -36,15 +44,73 @@ export function SignUpForm() {
     handleSubmit,
     formState: { errors },
     setError,
+    watch,
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
   })
+
+  const watchedUsername = watch('username')
+
+  // Check username availability with debouncing
+  const checkUsername = useCallback(async (username: string) => {
+    if (!username || username.length < 3) {
+      setUsernameStatus('idle')
+      setUsernameError(null)
+      return
+    }
+
+    // Check format first
+    const formatError = UsernameService.getValidationError(username)
+    if (formatError) {
+      setUsernameStatus('taken')
+      setUsernameError(formatError)
+      return
+    }
+
+    setUsernameStatus('checking')
+    setUsernameError(null)
+
+    try {
+      const isAvailable = await UsernameService.isUsernameAvailable(username)
+      if (isAvailable) {
+        setUsernameStatus('available')
+        setUsernameError(null)
+      } else {
+        setUsernameStatus('taken')
+        setUsernameError('Username is already taken')
+      }
+    } catch (error) {
+      console.error('Error checking username:', error)
+      setUsernameStatus('idle')
+      setUsernameError('Unable to check username availability')
+    }
+  }, [])
+
+  // Debounce username checking
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (watchedUsername) {
+        checkUsername(watchedUsername)
+      }
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }, [watchedUsername, checkUsername])
 
   const onSubmit = async (data: SignUpFormData) => {
     setIsLoading(true)
     clearError()
 
-    const result = await signUp(data.email, data.password, data.displayName)
+    // Final username check before submission
+    if (usernameStatus !== 'available') {
+      setError('username', { 
+        message: usernameError || 'Please choose a valid username' 
+      })
+      setIsLoading(false)
+      return
+    }
+
+    const result = await signUp(data.email, data.password, data.displayName, data.username)
     
     if (result.success) {
       router.push('/games')
@@ -109,6 +175,27 @@ export function SignUpForm() {
               error={errors.displayName?.message}
               disabled={isLoading}
             />
+          </div>
+
+          <div className="relative">
+            <Input
+              {...register('username')}
+              type="text"
+              placeholder="Username"
+              error={errors.username?.message || usernameError || undefined}
+              disabled={isLoading}
+            />
+            <div className="absolute right-3 top-2 flex items-center">
+              {usernameStatus === 'checking' && (
+                <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              )}
+              {usernameStatus === 'available' && (
+                <CheckCircle size={20} className="text-success" />
+              )}
+              {usernameStatus === 'taken' && (
+                <XCircle size={20} className="text-error" />
+              )}
+            </div>
           </div>
 
           <div>

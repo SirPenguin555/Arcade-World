@@ -9,10 +9,10 @@ import { AuthService } from '@/lib/firebase/auth'
 interface AuthStore extends AuthState {
   // Actions
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
-  signUp: (email: string, password: string, displayName: string) => Promise<{ success: boolean; error?: string }>
+  signUp: (email: string, password: string, displayName: string, username: string) => Promise<{ success: boolean; error?: string }>
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>
   signInAnonymously: () => Promise<{ success: boolean; error?: string }>
-  linkAccount: (email: string, password: string, displayName: string) => Promise<{ success: boolean; error?: string }>
+  linkAccount: (email: string, password: string, displayName: string, username: string) => Promise<{ success: boolean; error?: string }>
   signOut: () => Promise<void>
   clearError: () => void
   
@@ -44,9 +44,9 @@ export const useAuthStore = create<AuthStore>()(
       return { success: true }
     },
 
-    signUp: async (email: string, password: string, displayName: string) => {
+    signUp: async (email: string, password: string, displayName: string, username: string) => {
       set({ loading: true, error: null })
-      const { error } = await AuthService.registerWithEmail(email, password, displayName)
+      const { error } = await AuthService.registerWithEmail(email, password, displayName, username)
       
       if (error) {
         set({ loading: false, error: error.message })
@@ -80,9 +80,9 @@ export const useAuthStore = create<AuthStore>()(
       return { success: true }
     },
 
-    linkAccount: async (email: string, password: string, displayName: string) => {
+    linkAccount: async (email: string, password: string, displayName: string, username: string) => {
       set({ loading: true, error: null })
-      const { error } = await AuthService.linkAnonymousAccount(email, password, displayName)
+      const { error } = await AuthService.linkAnonymousAccount(email, password, displayName, username)
       
       if (error) {
         set({ loading: false, error: error.message })
