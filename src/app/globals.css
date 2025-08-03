@@ -1,26 +1,172 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Arcade Theme Colors */
+  --background: #0a0a0f;
+  --foreground: #ffffff;
+  --primary: #00ffff;
+  --secondary: #ff00ff;
+  --accent: #ffff00;
+  --success: #00ff00;
+  --warning: #ffa500;
+  --error: #ff0000;
+  --muted: #6b7280;
+  --border: #1f2937;
+  --card: #111827;
+  --card-foreground: #f9fafb;
 }
 
 @theme inline {
+  /* Base colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  
+  /* Arcade brand colors */
+  --color-primary: var(--primary);
+  --color-primary-50: #ecfeff;
+  --color-primary-100: #cffafe;
+  --color-primary-200: #a5f3fc;
+  --color-primary-300: #67e8f9;
+  --color-primary-400: #22d3ee;
+  --color-primary-500: var(--primary);
+  --color-primary-600: #0891b2;
+  --color-primary-700: #0e7490;
+  --color-primary-800: #155e75;
+  --color-primary-900: #164e63;
+  
+  --color-secondary: var(--secondary);
+  --color-secondary-50: #fdf4ff;
+  --color-secondary-100: #fae8ff;
+  --color-secondary-200: #f5d0fe;
+  --color-secondary-300: #f0abfc;
+  --color-secondary-400: #e879f9;
+  --color-secondary-500: var(--secondary);
+  --color-secondary-600: #c026d3;
+  --color-secondary-700: #a21caf;
+  --color-secondary-800: #86198f;
+  --color-secondary-900: #701a75;
+  
+  --color-accent: var(--accent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  
+  /* Typography */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-arcade: 'Orbitron', monospace;
+  
+  /* Custom breakpoints */
+  --breakpoint-xs: 400px;
+  
+  /* Shadows and effects */
+  --shadow-neon: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+  --shadow-neon-sm: 0 0 5px currentColor, 0 0 10px currentColor;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff;
+    --foreground: #0a0a0f;
+    --primary: #0891b2;
+    --secondary: #c026d3;
+    --accent: #d97706;
+    --card: #f9fafb;
+    --card-foreground: #111827;
+    --border: #e5e7eb;
+    --muted: #6b7280;
   }
 }
 
+/* Base styles */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Arcade-specific utilities */
+.neon-glow {
+  text-shadow: var(--shadow-neon);
+  color: var(--primary);
+}
+
+.neon-glow-secondary {
+  text-shadow: var(--shadow-neon);
+  color: var(--secondary);
+}
+
+.neon-border {
+  border: 2px solid var(--primary);
+  box-shadow: var(--shadow-neon-sm);
+}
+
+.arcade-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.arcade-button {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border: none;
+  border-radius: 8px;
+  color: var(--background);
+  font-weight: 600;
+  padding: 12px 24px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+  box-shadow: 
+    0 4px 14px 0 rgba(0, 255, 255, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.arcade-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 20px 0 rgba(0, 255, 255, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.arcade-button:active {
+  transform: translateY(0);
+}
+
+/* Game canvas styles */
+.game-canvas {
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  box-shadow: var(--shadow-neon-sm);
+  background: #000;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--card);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 4px;
+  box-shadow: var(--shadow-neon-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary);
 }
