@@ -1,59 +1,15 @@
-import { Timestamp, FieldValue } from 'firebase/firestore'
+import { Database } from './database'
 
-export interface UserProfile {
-  uid: string
-  email: string | null
-  displayName: string | null
-  username: string // Unique username for the platform
-  photoURL: string | null
-  isGuest: boolean
-  
-  // Game Progress
-  points: number
-  tickets: number
-  level: number
-  experience: number
-  
-  // Unlocked Content
-  unlockedArcades: string[]
-  unlockedModes: string[]
-  
-  // Customization
-  preferences: {
-    theme: 'light' | 'dark' | 'auto'
-    soundEnabled: boolean
-    musicEnabled: boolean
-    notifications: boolean
-  }
-  
-  // Timestamps
-  createdAt: Timestamp | FieldValue | null
-  updatedAt: Timestamp | FieldValue | null
-  lastLoginAt: Timestamp | FieldValue | null
-  accountLinkedAt?: Timestamp | FieldValue | null
+export type UserProfile = Database['public']['Tables']['profiles']['Row']
+
+export interface UserPreferences {
+  theme: 'light' | 'dark' | 'auto'
+  soundEnabled: boolean
+  musicEnabled: boolean
+  notifications: boolean
 }
 
-export interface UserStats {
-  uid: string
-  
-  // Overall Stats
-  gamesPlayed: number
-  totalPlayTime: number // in seconds
-  highestStreak: number
-  
-  // Currency Stats
-  totalPointsEarned: number
-  totalTicketsEarned: number
-  totalPrizesWon: number
-  
-  // Game-specific stats (dynamic based on games)
-  gameStats: Record<string, GameStats>
-  
-  // Achievement progress
-  achievements: Achievement[]
-  
-  updatedAt: Timestamp | FieldValue | null
-}
+export type UserStats = Database['public']['Tables']['user_stats']['Row']
 
 export interface GameStats {
   gameId: string
@@ -68,27 +24,18 @@ export interface GameStats {
 
 export interface Achievement {
   id: string
-  unlockedAt: Timestamp | FieldValue | null
+  unlockedAt: string
   progress?: number
   maxProgress?: number
 }
 
-export interface UserPreferences {
-  theme: 'light' | 'dark' | 'auto'
-  soundEnabled: boolean
-  musicEnabled: boolean
-  notifications: boolean
-  controlScheme: 'touch' | 'keyboard' | 'auto'
-}
-
 // Auth-related types
 export interface AuthUser {
-  uid: string
+  id: string
   email: string | null
-  displayName: string | null
-  photoURL: string | null
-  isAnonymous: boolean
+  phone: string | null
   emailVerified: boolean
+  isAnonymous: boolean
 }
 
 export interface AuthState {

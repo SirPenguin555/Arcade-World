@@ -82,7 +82,7 @@ export function Navbar() {
                 >
                   <User size={20} />
                   <span className="text-sm">
-                    {profile?.displayName || user.displayName || 'Player'}
+                    {profile?.display_name || 'Player'}
                   </span>
                 </Link>
                 <Button
@@ -173,7 +173,7 @@ export function Navbar() {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <User size={20} />
-                    <span>{profile?.displayName || user.displayName || 'Profile'}</span>
+                    <span>{profile?.display_name || 'Profile'}</span>
                   </Link>
                   <button
                     onClick={handleSignOut}

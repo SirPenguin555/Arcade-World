@@ -1,5 +1,4 @@
-import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore'
-import { db } from './config'
+import { supabase } from './client'
 
 // Reserved usernames that cannot be used
 const RESERVED_USERNAMES = [
@@ -23,12 +22,25 @@ export class UsernameService {
     }
 
     try {
-      // Check if username exists in Firestore
-      const usernamesRef = collection(db, 'usernames')
-      const q = query(usernamesRef, where('username', '==', username.toLowerCase()))
-      const querySnapshot = await getDocs(q)
-      
-      return querySnapshot.empty
+      // Check if username exists in Supabase
+      const { error } = await supabase
+        .from('usernames')
+        .select('username')
+        .eq('username', username.toLowerCase())
+        .single()
+
+      if (error && error.code === 'PGRST116') {
+        // No rows returned - username is available
+        return true
+      }
+
+      if (error) {
+        console.error('Error checking username availability:', error)
+        return false
+      }
+
+      // Username exists - not available
+      return false
     } catch (error) {
       console.error('Error checking username availability:', error)
       return false
@@ -36,20 +48,27 @@ export class UsernameService {
   }
 
   // Reserve a username for a user
-  static async reserveUsername(username: string, uid: string): Promise<boolean> {
+  static async reserveUsername(username: string, userId: string): Promise<boolean> {
     try {
       const isAvailable = await this.isUsernameAvailable(username)
       if (!isAvailable) {
         return false
       }
 
-      // Create username document
-      await setDoc(doc(db, 'usernames', username.toLowerCase()), {
-        username: username.toLowerCase(),
-        originalUsername: username, // Keep original casing
-        uid,
-        createdAt: new Date().toISOString(),
-      })
+      // Insert username record
+      const { error } = await supabase
+        .from('usernames')
+        .insert({
+          username: username.toLowerCase(),
+          original_username: username, // Keep original casing
+          user_id: userId,
+          created_at: new Date().toISOString(),
+        })
+
+      if (error) {
+        console.error('Error reserving username:', error)
+        return false
+      }
 
       return true
     } catch (error) {

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { useAuthStore } from '@/stores/auth'
-import { UsernameService } from '@/lib/firebase/usernames'
+import { UsernameService } from '@/lib/supabase/usernames'
 import { GoogleLogo, Eye, EyeSlash, CheckCircle, XCircle } from '@phosphor-icons/react'
 
 const signUpSchema = z.object({

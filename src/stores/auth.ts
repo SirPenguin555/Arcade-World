@@ -1,10 +1,9 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import { User, onAuthStateChanged } from 'firebase/auth'
-import { doc, onSnapshot } from 'firebase/firestore'
-import { auth, db } from '@/lib/firebase/config'
+import { supabase } from '@/lib/supabase/client'
 import { AuthState, UserProfile } from '@/types/user'
-import { AuthService } from '@/lib/firebase/auth'
+import { AuthService } from '@/lib/supabase/auth'
+import type { User } from '@supabase/supabase-js'
 
 interface AuthStore extends AuthState {
   // Actions
@@ -102,12 +101,11 @@ export const useAuthStore = create<AuthStore>()(
 
     // Internal actions
     setUser: (user) => set({ user: user ? {
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName,
-      photoURL: user.photoURL,
-      isAnonymous: user.isAnonymous,
-      emailVerified: user.emailVerified,
+      id: user.id,
+      email: user.email || null,
+      phone: user.phone || null,
+      emailVerified: !!user.email_confirmed_at,
+      isAnonymous: user.is_anonymous || false,
     } : null }),
     
     setProfile: (profile) => set({ profile }),
@@ -117,43 +115,72 @@ export const useAuthStore = create<AuthStore>()(
 )
 
 // Initialize auth state listener
-let authUnsubscribe: (() => void) | null = null
-let profileUnsubscribe: (() => void) | null = null
+let authSubscription: { data: { subscription: { unsubscribe: () => void } } } | null = null
 
 export const initializeAuth = () => {
   // Clean up existing listeners
-  if (authUnsubscribe) authUnsubscribe()
-  if (profileUnsubscribe) profileUnsubscribe()
+  if (authSubscription) {
+    authSubscription.data.subscription.unsubscribe()
+  }
 
   // Listen to auth state changes
-  authUnsubscribe = onAuthStateChanged(auth, (user) => {
+  authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
     const { setUser, setLoading, setProfile } = useAuthStore.getState()
     
-    setUser(user)
+    setUser(session?.user || null)
     
-    if (user) {
-      // Listen to user profile changes
-      profileUnsubscribe = onSnapshot(
-        doc(db, 'users', user.uid),
-        (doc) => {
-          if (doc.exists()) {
-            setProfile(doc.data() as UserProfile)
-          } else {
-            setProfile(null)
+    if (session?.user) {
+      // Check if user has a profile, create if needed
+      try {
+        let profile = await AuthService.getUserProfile(session.user.id)
+        
+        if (!profile && event === 'SIGNED_IN') {
+          // Handle OAuth sign-ins where profile might not exist
+          const userData = session.user.user_metadata
+          const email = session.user.email
+          
+          if (email && !session.user.is_anonymous) {
+            // Generate a username from email or display name
+            const baseUsername = (userData?.full_name || email.split('@')[0])
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, '') || 'player'
+            
+            let username = baseUsername
+            let counter = 1
+            
+            // Find available username
+            const { UsernameService } = await import('@/lib/supabase/usernames')
+            while (!(await UsernameService.isUsernameAvailable(username))) {
+              username = `${baseUsername}${counter}`
+              counter++
+              if (counter > 999) {
+                username = `player${Date.now()}`
+                break
+              }
+            }
+            
+            // Reserve username and create profile
+            await UsernameService.reserveUsername(username, session.user.id)
+            await AuthService.createUserProfile(
+              session.user, 
+              false, 
+              username, 
+              userData?.full_name || 'Player'
+            )
+            
+            // Fetch the newly created profile
+            profile = await AuthService.getUserProfile(session.user.id)
           }
-          setLoading(false)
-        },
-        (error) => {
-          console.error('Profile listener error:', error)
-          setLoading(false)
         }
-      )
-    } else {
-      // No user, clean up profile listener
-      if (profileUnsubscribe) {
-        profileUnsubscribe()
-        profileUnsubscribe = null
+        
+        setProfile(profile)
+        setLoading(false)
+        
+      } catch (error) {
+        console.error('Error handling auth state change:', error)
+        setLoading(false)
       }
+    } else {
       setProfile(null)
       setLoading(false)
     }
@@ -162,6 +189,7 @@ export const initializeAuth = () => {
 
 // Clean up function
 export const cleanupAuth = () => {
-  if (authUnsubscribe) authUnsubscribe()
-  if (profileUnsubscribe) profileUnsubscribe()
+  if (authSubscription) {
+    authSubscription.data.subscription.unsubscribe()
+  }
 }
