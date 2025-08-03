@@ -17,11 +17,12 @@ This is the technical stack for Arcade World, adapted from the global Agent OS s
 - **Game Adaptations:** Server-side game state management, real-time score processing
 
 ### Database
-- **Primary:** Firestore
-- **Type:** NoSQL Document Database
+- **Primary:** Supabase (PostgreSQL)
+- **Type:** Relational Database with real-time subscriptions
 - **Real-time:** Yes (critical for live leaderboards and multiplayer)
-- **Offline Support:** Yes (continue playing when offline, sync when online)
+- **Authentication:** Supabase Auth with Row Level Security
 - **Game Data:** Player profiles, game scores, unlocks, progression tracking
+- **Migration:** Migrated from Firebase to Supabase for better SQL support
 
 ## Frontend Stack
 

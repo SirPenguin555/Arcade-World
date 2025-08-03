@@ -63,7 +63,13 @@ export class AuthService {
         password
       })
 
-      if (error) throw error
+      if (error) {
+        // Handle email not confirmed error specifically
+        if (error.message.includes('Email not confirmed')) {
+          throw new Error('Please check your email and click the confirmation link, or contact support if you need help.')
+        }
+        throw error
+      }
 
       return { user: data.user, error: null }
     } catch (error) {
